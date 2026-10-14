@@ -121,7 +121,7 @@ function Onboarding({ onComplete }: { onComplete: (name: string, emoji: string, 
         <Charlie size={80} mood="happy" style={{ alignSelf: 'center' }} />
         <div className="text-center">
           <h2 className="text-3xl font-black text-[#3D2C1E]">Välj din likhets-emoji!</h2>
-          <p className="text-[#6B5344] mt-2 text-sm">Vi jämför ditt saldo med den här saken 😄</p>
+          <p className="text-[#6B5344] mt-2 text-sm">Vi jämför summan på ditt konto med den här saken 😄</p>
         </div>
         <div className="grid grid-cols-4 gap-3">
           {EMOJI_OPTS.map(e => (
@@ -171,16 +171,16 @@ function HomeTab({ balance, userName, userEmoji, purchases, streak, navigate }: 
       {balance === null ? (
         <div className="rounded-3xl p-5 bg-gradient-to-br from-[#0F6E56] via-[#0D6050] to-[#0A4A3A] shadow-[0_8px_32px_rgba(15,110,86,0.35),0_2px_8px_rgba(15,110,86,0.2)] flex flex-col items-center text-center gap-3">
           <Charlie size={90} mood="calm" />
-          <p className="text-white text-xl font-black">Lägg in ditt saldo</p>
-          <p className="text-white/75 text-sm max-w-[260px]">Ta en skärmbild av saldot i din mobilbank, så hjälper jag dig härifrån.</p>
+          <p className="text-white text-xl font-black">Lägg in det du har på ditt konto</p>
+          <p className="text-white/75 text-sm max-w-[260px]">Ta en skärmbild av hemskärmen i din mobilbank, så hjälper jag dig härifrån.</p>
           <button onClick={() => navigate('update')}
             className="w-full bg-[#F0C9AE] rounded-2xl py-3 text-sm font-extrabold text-[#3D2C1E] shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] transition-all active:scale-95">
-            📷 Lägg in saldo
+            📷 Lägg in vad du har på kontot
           </button>
         </div>
       ) : (
         <div className="rounded-3xl p-5 bg-gradient-to-br from-[#0F6E56] via-[#0D6050] to-[#0A4A3A] shadow-[0_8px_32px_rgba(15,110,86,0.35),0_2px_8px_rgba(15,110,86,0.2)]">
-          <p className="text-white/70 text-sm font-semibold">Ditt saldo</p>
+          <p className="text-white/70 text-sm font-semibold">Vad finns på kontot</p>
           <p className="text-5xl font-black text-white mt-1">{balance.toLocaleString('sv-SE')} <span className="text-2xl text-white/70">kr</span></p>
           <div className="flex gap-2 mt-4">
             <button onClick={() => navigate('update')}
@@ -197,7 +197,7 @@ function HomeTab({ balance, userName, userEmoji, purchases, streak, navigate }: 
 
       {/* Charlie kommenterar */}
       {balance === null ? (
-        <CharlieComment mood="happy" text={`Hej ${first}! Så fort du lagt in ditt saldo kan jag räkna ut om du har råd med saker 💪`} />
+        <CharlieComment mood="happy" text={`Hej ${first}! Så fort du lagt in vad du har på ditt konto kan jag räkna ut om du har råd med saker 💪`} />
       ) : last ? (
         <CharlieComment
           mood={balance > 300 ? 'happy' : 'thinking'}
@@ -212,7 +212,7 @@ function HomeTab({ balance, userName, userEmoji, purchases, streak, navigate }: 
         <div className="rounded-3xl p-5 shadow-[0_4px_24px_rgba(0,0,0,0.07)] flex items-center gap-4" style={{ backgroundColor: '#EFD9C3' }}>
           <span className="text-5xl">{userEmoji}</span>
           <div>
-            <p className="text-xs font-bold text-[#8B6040]">Ditt saldo motsvarar</p>
+            <p className="text-xs font-bold text-[#8B6040]">Summan på ditt konto motsvarar</p>
             <p className="text-3xl font-black text-[#3D2C1E]">{eqCount.toLocaleString('sv-SE')} st</p>
             <p className="text-sm text-[#8B6040]">{meta.name} á {meta.price} kr</p>
           </div>
@@ -452,7 +452,7 @@ function HarJagRad({ balance, onBack, onChecked, navigate }: {
       <div className="flex-1 flex flex-col items-center justify-center text-center gap-4">
         <Charlie size={100} mood="thinking" />
         <p className="text-[#6B5344] font-bold max-w-[260px]">Jag behöver veta hur mycket du har på kontot först.</p>
-        <Btn full onClick={() => navigate('update')}>📷 Lägg in saldo</Btn>
+        <Btn full onClick={() => navigate('update')}>📷 Lägg in vad du har på ditt konto</Btn>
       </div>
     </div>
   );
@@ -496,7 +496,7 @@ function HarJagRad({ balance, onBack, onChecked, navigate }: {
             <p className="text-xs text-[#9B8070] font-semibold uppercase tracking-wide">Du vill köpa för</p>
             <p className="text-3xl font-black text-[#3D2C1E] mt-1">{t.toLocaleString('sv-SE')} kr</p>
             <div className="my-3 h-px bg-[#F5EFE2]" />
-            <p className="text-xs text-[#9B8070] font-semibold uppercase tracking-wide">Ditt saldo</p>
+            <p className="text-xs text-[#9B8070] font-semibold uppercase tracking-wide">Vad finns på kontot</p>
             <p className={`text-2xl font-black mt-1 ${result === 'yes' ? 'text-[#0F6E56]' : 'text-[#C97B5C]'}`}>{balance.toLocaleString('sv-SE')} kr</p>
             {result === 'yes' && <p className="text-sm text-[#0F6E56] mt-2 font-semibold">Du har {(balance - t).toLocaleString('sv-SE')} kr kvar efteråt ✓</p>}
           </Card>
@@ -516,7 +516,7 @@ function HarJagRad({ balance, onBack, onChecked, navigate }: {
         <h2 className="text-xl font-black text-[#3D2C1E]">Har jag råd?</h2>
       </div>
       <div className="flex justify-between items-center bg-white/80 rounded-2xl px-4 py-2.5">
-        <span className="text-sm font-bold text-[#6B5344]">Ditt saldo</span>
+        <span className="text-sm font-bold text-[#6B5344]">Vad finns på kontot</span>
         <span className="text-lg font-black text-[#0F6E56]">{balance.toLocaleString('sv-SE')} kr</span>
       </div>
       {items.length > 0 && (
@@ -897,7 +897,7 @@ function SettingsScreen({ userName, userEmoji, consent, onBack, onSave, onReset 
           <Btn variant="coral" full sm onClick={() => setConfirmDel(true)}>Radera all min data</Btn>
         ) : (
           <div className="flex flex-col gap-2">
-            <p className="text-sm font-semibold text-[#3D2C1E]">Säker? Saldo, köp, drömmar och badges försvinner för alltid.</p>
+            <p className="text-sm font-semibold text-[#3D2C1E]">Säker? Summan på kontot, köp, drömmar och badges försvinner för alltid.</p>
             <div className="flex gap-2">
               <Btn variant="secondary" sm full onClick={() => setConfirmDel(false)}>Avbryt</Btn>
               <Btn variant="coral" sm full onClick={onReset}>Ja, radera</Btn>
@@ -979,12 +979,12 @@ function UpdateBalance({ mode, onBack, onBalance, onPurchases }: {
     <div className="flex-1 overflow-y-auto pb-6 px-4 pt-4 flex flex-col gap-4">
       <div className="flex items-center gap-3">
         <BackBtn onClick={onBack} />
-        <h2 className="text-xl font-black text-[#3D2C1E]">{isBal ? 'Uppdatera saldo' : 'Uppdatera köp'}</h2>
+        <h2 className="text-xl font-black text-[#3D2C1E]">{isBal ? 'Uppdatera summan på konto' : 'Uppdatera köp'}</h2>
       </div>
 
       {step === 'start' && <>
         <CharlieComment mood="happy" text={isBal
-          ? 'Ta en skärmbild av saldot i din mobilbank, så läser jag av det åt dig! 📱'
+          ? 'Ta en skärmbild av hemskärmen i din mobilbank, så läser jag av det åt dig! 📱'
           : 'Ta en skärmbild av dina senaste köp i mobilbanken, så sorterar jag dem åt dig! 📱'} />
         <Card>
           <ol className="flex flex-col gap-2 text-sm text-[#5A4235] font-semibold">
@@ -1079,11 +1079,11 @@ function UpdateBalance({ mode, onBack, onBalance, onPurchases }: {
       {step === 'manual' && isBal && <>
         <CharlieComment mood="happy" text="Okej! Skriv in hur mycket du har på kontot." />
         <input type="number" inputMode="numeric" value={manAmt} onChange={e => setManAmt(e.target.value)} placeholder="0 kr"
-          aria-label="Saldo i kronor"
+          aria-label="Vad finns på kontot i kronor"
           className="w-full rounded-2xl px-5 py-5 text-4xl font-black text-[#3D2C1E] bg-white shadow-sm outline-none focus:ring-2 focus:ring-[#0F6E56] text-center"
         />
         <Btn variant="primary" full disabled={manAmt === ''} onClick={() => onBalance(Math.max(0, parseInt(manAmt) || 0))}>
-          Spara saldo →
+          Spara summan →
         </Btn>
         <Btn variant="secondary" full onClick={() => setStep('start')}>← Tillbaka</Btn>
       </>}
