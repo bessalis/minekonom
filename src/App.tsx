@@ -952,6 +952,7 @@ function UpdateBalance({ mode, testCode, existing, onBack, onBalance, onPurchase
   const [pName, setPName] = useState('');
   const [pCat, setPCat] = useState(CATEGORIES[0].name);
   const [errMsg, setErrMsg] = useState<string | null>(null);
+  const [errWhy, setErrWhy] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const timer = useRef<number | undefined>(undefined);
   useEffect(() => () => window.clearTimeout(timer.current), []);
@@ -977,8 +978,8 @@ function UpdateBalance({ mode, testCode, existing, onBack, onBalance, onPurchase
   // Riktig avläsning (när testkod finns): bilden förminskas och görs om till JPEG i telefonen
   // (det tar också bort metadata) och skickas till vår serverfunktion. Den sparas inte.
   const readReal = async (file: File) => {
-    setStep('loading'); setErrMsg(null);
-    const fail = (msg?: string) => { setErrMsg(msg ?? null); setStep('error'); };
+    setStep('loading'); setErrMsg(null); setErrWhy(null);
+    const fail = (why: string, msg?: string) => { setErrWhy(why); setErrMsg(msg ?? null); setStep('error'); };
     try {
       const bmp = await createImageBitmap(file);
       const sc = Math.min(1, 1600 / Math.max(bmp.width, bmp.height));
@@ -994,12 +995,13 @@ function UpdateBalance({ mode, testCode, existing, onBack, onBalance, onPurchase
         body: JSON.stringify({ code: testCode, mode, today: todayISO(), image }),
       });
       window.clearTimeout(to);
-      const j = await res.json();
+      let j: any;
+      try { j = await res.json(); } catch { return fail(`svar ${res.status} (inte JSON)`); }
 
-      if (j.error === 'bad_code') return fail('Testkoden fungerar inte. Be den som bjöd in dig om en ny länk.');
-      if (!j.ok) return fail();
+      if (j.error === 'bad_code') return fail('bad_code', 'Testkoden fungerar inte. Be den som bjöd in dig om en ny länk.');
+      if (!j.ok) return fail(`${j.error ?? 'okänt'} (${res.status})`);
       if (isBal) {
-        if (typeof j.balance !== 'number') return fail();
+        if (typeof j.balance !== 'number') return fail('inget saldo i svaret');
         setDetected(j.balance);
       } else {
         const t = todayISO();
@@ -1014,8 +1016,8 @@ function UpdateBalance({ mode, testCode, existing, onBack, onBalance, onPurchase
         setFound(list);
       }
       setStep('detected');
-    } catch {
-      fail();
+    } catch (e) {
+      fail(`${(e as Error)?.name ?? 'fel'}: ${(e as Error)?.message ?? ''}`.slice(0, 120));
     }
   };
 
@@ -1147,6 +1149,7 @@ function UpdateBalance({ mode, testCode, existing, onBack, onBalance, onPurchase
             <p className="text-sm text-[#6B5344] mt-2 max-w-[270px] mx-auto">{errMsg ?? `${isBal ? 'Se till att det syns tydligt vad som finns på kontot' : 'Se till att hela listan syns tydligt'} på skärmbilden och försök igen.`}</p>
           </div>
         </div>
+        {testCode && errWhy && <p className="text-[11px] text-[#9B8070] text-center break-words">Teknisk orsak (testversion): {errWhy}</p>}
         <Btn variant="primary" full onClick={() => setStep('start')}>Försök igen</Btn>
         <Btn variant="secondary" full onClick={() => setStep('manual')}>Skriv in själv</Btn>
       </>}
