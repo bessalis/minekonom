@@ -207,17 +207,30 @@ function HomeTab({ balance, userName, userEmoji, purchases, streak, navigate }: 
         <CharlieComment mood="happy" text="Lägg in dina köp under Mina köp, så kan vi se vad pengarna går till 👀" />
       )}
 
-      {/* Likhets-kort */}
-      {balance !== null && (
-        <div className="rounded-3xl p-5 shadow-[0_4px_24px_rgba(0,0,0,0.07)] flex items-center gap-4" style={{ backgroundColor: '#EFD9C3' }}>
-          <span className="text-5xl">{userEmoji}</span>
-          <div>
+      {/* Likhets-kort: visar varje enhet som en egen ikon, tio per rad, så att mängden syns och inte bara läses */}
+      {balance !== null && (() => {
+        const MAX = 100;
+        const shown = Math.min(eqCount, MAX);
+        return (
+          <div className="rounded-3xl p-5 shadow-[0_4px_24px_rgba(0,0,0,0.07)]" style={{ backgroundColor: '#EFD9C3' }}>
             <p className="text-xs font-bold text-[#8B6040]">Summan på ditt konto motsvarar</p>
-            <p className="text-3xl font-black text-[#3D2C1E]">{eqCount.toLocaleString('sv-SE')} st</p>
-            <p className="text-sm text-[#8B6040]">{meta.name} á {meta.price} kr</p>
+            <p className="text-3xl font-black text-[#3D2C1E]">{eqCount.toLocaleString('sv-SE')} {meta.name}</p>
+            <p className="text-sm text-[#8B6040]">á {meta.price} kr styck</p>
+            {eqCount === 0 ? (
+              <p className="text-sm text-[#8B6040] mt-3">Inte en hel en ännu 🙂</p>
+            ) : (
+              <div role="img" aria-label={`${eqCount} ${meta.name}`} className="grid grid-cols-10 gap-x-0.5 gap-y-1 mt-4">
+                {Array.from({ length: shown }, (_, i) => (
+                  <span key={i} className="text-[22px] leading-none text-center select-none" aria-hidden="true">{userEmoji}</span>
+                ))}
+              </div>
+            )}
+            {eqCount > MAX && (
+              <p className="text-xs font-bold text-[#8B6040] mt-3">…och {(eqCount - MAX).toLocaleString('sv-SE')} till</p>
+            )}
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Veckodiagram */}
       <Card>
