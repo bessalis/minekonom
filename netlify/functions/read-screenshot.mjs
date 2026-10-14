@@ -105,10 +105,19 @@ export default async (req) => {
       }),
       signal: AbortSignal.timeout(40000),
     });
-  } catch {
-    return json({ ok: false, error: 'upstream' }, 502);
+  } catch (e) {
+    return json({ ok: false, error: 'upstream', detail: `nätverk: ${e?.name ?? 'fel'}` }, 502);
   }
-  if (!res.ok) return json({ ok: false, error: 'upstream' }, 502);
+  if (!res.ok) {
+    // Anthropics felmeddelande (typ + text) innehåller inga hemligheter och hjälper vid felsökning.
+    let detail = `status ${res.status}`;
+    try {
+      const err = await res.json();
+      detail += `: ${err?.error?.type ?? ''} ${err?.error?.message ?? ''}`.trimEnd();
+    } catch { /* ignore */ }
+    console.error('Anthropic svarade', detail);
+    return json({ ok: false, error: 'upstream', detail: detail.slice(0, 200) }, 502);
+  }
 
   let data;
   try { data = await res.json(); } catch { return json({ ok: false, error: 'upstream' }, 502); }

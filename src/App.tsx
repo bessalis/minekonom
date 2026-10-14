@@ -999,7 +999,7 @@ function UpdateBalance({ mode, testCode, existing, onBack, onBalance, onPurchase
       try { j = await res.json(); } catch { return fail(`svar ${res.status} (inte JSON)`); }
 
       if (j.error === 'bad_code') return fail('bad_code', 'Testkoden fungerar inte. Be den som bjöd in dig om en ny länk.');
-      if (!j.ok) return fail(`${j.error ?? 'okänt'} (${res.status})`);
+      if (!j.ok) return fail(`${j.error ?? 'okänt'} (${res.status})${j.detail ? ' – ' + j.detail : ''}`);
       if (isBal) {
         if (typeof j.balance !== 'number') return fail('inget saldo i svaret');
         setDetected(j.balance);
