@@ -989,7 +989,7 @@ function UpdateBalance({ mode, onBack, onBalance, onPurchases }: {
         <Card>
           <ol className="flex flex-col gap-2 text-sm text-[#5A4235] font-semibold">
             <li>1. Öppna din mobilbank</li>
-            <li>2. Ta en skärmbild av {isBal ? 'saldot' : 'köpen'}</li>
+            <li>2. Ta en skärmbild av {isBal ? 'hemskärmen' : 'köpen'}</li>
             <li>3. Kom tillbaka hit och välj bilden</li>
           </ol>
         </Card>
@@ -1069,7 +1069,7 @@ function UpdateBalance({ mode, onBack, onBalance, onPurchases }: {
           <Charlie size={90} mood="worried" />
           <div className="text-center">
             <p className="text-2xl font-black text-[#3D2C1E]">Vi kunde inte läsa av bilden</p>
-            <p className="text-sm text-[#6B5344] mt-2 max-w-[270px] mx-auto">Se till att hela {isBal ? 'saldot' : 'listan'} syns tydligt på skärmbilden och försök igen.</p>
+            <p className="text-sm text-[#6B5344] mt-2 max-w-[270px] mx-auto">{isBal ? 'Se till att det syns tydligt vad som finns på kontot' : 'Se till att hela listan syns tydligt'} på skärmbilden och försök igen.</p>
           </div>
         </div>
         <Btn variant="primary" full onClick={() => setStep('start')}>Försök igen</Btn>
