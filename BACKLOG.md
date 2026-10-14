@@ -3,7 +3,7 @@
 Ordning: överst = närmast. Flytta rader till "Klart" när de är gjorda.
 
 ## Näst på tur
-- [ ] **Riktig skärmdumpsavläsning** via serverfunktion (Netlify Function) med AI-bildläsning. Kräver: API-nyckel som miljövariabel i Netlify, testkod som skydd mot missbruk, skriftligt samtycke från vårdnadshavare utanför appen, genomgång av leverantörens lagringsvillkor.
+- [ ] **Slå på riktig skärmdumpsavläsning**: koden är klar. Kvar: sätt `ANTHROPIC_API_KEY` och `TEST_CODES` i Netlify, skriftligt samtycke från vårdnadshavare utanför appen, kontrollera leverantörens lagringsvillkor och att samtyckestexten i appen stämmer med dem.
 - [ ] **Testa formuleringar** av "saldo / vad finns på kontot / summan på kontot". Välj den som fastnar bäst hos målgruppen och gör texterna enhetliga.
 
 ## Idéer – avvaktar
@@ -19,6 +19,7 @@ Ordning: överst = närmast. Flytta rader till "Klart" när de är gjorda.
 - [ ] **Skydd mot felinmatning** (om manuell inmatning blir huvudväg): läs upp siffran i ord och som likhet, varna vid stora förändringar mot förra värdet.
 
 ## Klart
+- [x] Skärmdumpsavläsning (kod): serverfunktion `netlify/functions/read-screenshot.mjs`, testkod via länk `?kod=…`, faller tillbaka på fejkat läge utan kod
 - [x] PWA av Figma-prototypen, offline, installerbar
 - [x] Samtyckessteg i onboarding + vårdnadshavartext i inställningar
 - [x] Copyändringar: "vad finns på kontot", "hemskärmen"

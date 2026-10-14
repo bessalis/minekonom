@@ -25,6 +25,7 @@ export interface AppState {
   openDays: string[];     // ISO-datum (lokal tid) då appen öppnats
   harRadCount: number;    // antal gånger "Har jag råd?" använts
   celebrated: number[];   // badge-id som redan firats
+  testCode: string | null; // testkod från inbjudningslänken (?kod=…) – slår på riktig avläsning
   consent: string | null; // ISO-tidpunkt då användaren intygade vårdnadshavarens OK (lokalt, ej verifierat)
 }
 
@@ -131,7 +132,7 @@ export const CATEGORIES: { name: string; emoji: string }[] = [
 
 export const freshState = (): AppState => ({
   v: 1, onboarded: false, userName: '', userEmoji: '🍟', balance: null,
-  purchases: [], dreams: [], openDays: [], harRadCount: 0, celebrated: [], consent: null,
+  purchases: [], dreams: [], openDays: [], harRadCount: 0, celebrated: [], consent: null, testCode: null,
 });
 
 /** Förifylld data för demo/visning (öppna appen med ?demo=1 första gången). */
@@ -166,21 +167,30 @@ export function loadState(): AppState {
   let params: URLSearchParams | null = null;
   try { params = new URLSearchParams(window.location.search); } catch { /* ignore */ }
 
-  // ?reset=1 rensar allt (praktiskt vid användartester), ?demo=1 fyller med exempeldata
-  if (params?.has('reset') || params?.has('demo')) {
+  // ?reset=1 rensar allt (praktiskt vid användartester), ?demo=1 fyller med exempeldata,
+  // ?kod=… sparar testkoden som slår på riktig skärmdumpsavläsning (kan kombineras: ?reset=1&kod=…)
+  const kod = params?.get('kod')?.trim().slice(0, 64) || null;
+  const special = !!(params && (params.has('reset') || params.has('demo')));
+  let st: AppState | null = null;
+
+  if (special) {
     try { localStorage.removeItem(KEY); } catch { /* ignore */ }
-    const st = params.has('demo') ? demoState() : freshState();
-    try { window.history.replaceState(null, '', window.location.pathname); } catch { /* ignore */ }
-    return st;
+    st = params!.has('demo') ? demoState() : freshState();
+  } else {
+    try {
+      const raw = localStorage.getItem(KEY);
+      if (raw) {
+        const p = JSON.parse(raw) as Partial<AppState>;
+        if (p && p.v === 1) st = { ...freshState(), ...p } as AppState;
+      }
+    } catch { /* trasig eller blockerad lagring – börja om */ }
   }
-  try {
-    const raw = localStorage.getItem(KEY);
-    if (raw) {
-      const p = JSON.parse(raw) as Partial<AppState>;
-      if (p && p.v === 1) return { ...freshState(), ...p } as AppState;
-    }
-  } catch { /* trasig eller blockerad lagring – börja om */ }
-  return freshState();
+  if (!st) st = freshState();
+  if (kod) st = { ...st, testCode: kod };
+  if (special || kod) {
+    try { window.history.replaceState(null, '', window.location.pathname); } catch { /* ignore */ }
+  }
+  return st;
 }
 
 export function saveState(st: AppState) {

@@ -10,7 +10,7 @@ type Nav = (s: string, p?: Record<string, unknown>) => void;
 
 // ─── Onboarding ───────────────────────────────────────────────────────────────
 
-function Onboarding({ onComplete }: { onComplete: (name: string, emoji: string, consent: string) => void }) {
+function Onboarding({ realReading, onComplete }: { realReading: boolean; onComplete: (name: string, emoji: string, consent: string) => void }) {
   const [step, setStep] = useState(0);
   const [consent, setConsent] = useState<string | null>(null);
   const [checked, setChecked] = useState(false);
@@ -53,7 +53,11 @@ function Onboarding({ onComplete }: { onComplete: (name: string, emoji: string, 
           <ul className="flex flex-col gap-2 text-sm text-[#5A4235] leading-snug list-disc pl-5">
             <li>Min Ekonom Light är en <b>testversion</b> som hjälper barn och unga att hålla koll på sina pengar.</li>
             <li>Det finns <b>inget konto och ingen bankkoppling</b>. Allt barnet skriver in sparas bara i den här telefonen.</li>
-            <li>Skärmbilder från mobilbanken <b>skickas inte någonstans</b> och sparas inte. I den här versionen läses de inte ens av.</li>
+            {realReading ? (
+              <li>När barnet väljer en skärmbild från mobilbanken <b>skickas bilden krypterat till en AI-tjänst</b> som läser av siffrorna. Min Ekonom sparar inte bilden. Enligt AI-tjänstens villkor kan den under en begränsad tid finnas kvar hos leverantören.</li>
+            ) : (
+              <li>Skärmbilder från mobilbanken <b>skickas inte någonstans</b> och sparas inte. I den här versionen läses de inte ens av.</li>
+            )}
             <li>Barnet kan när som helst radera allt under Inställningar.</li>
           </ul>
         </Card>
@@ -834,8 +838,8 @@ function ProfileTab({ userName, userEmoji, purchases, streak, navigate }: {
 
 // ─── Settings ─────────────────────────────────────────────────────────────────
 
-function SettingsScreen({ userName, userEmoji, consent, onBack, onSave, onReset }: {
-  userName: string; userEmoji: string; consent: string | null; onBack: () => void;
+function SettingsScreen({ userName, userEmoji, consent, realReading, onBack, onSave, onReset }: {
+  userName: string; userEmoji: string; consent: string | null; realReading: boolean; onBack: () => void;
   onSave: (name: string, emoji: string) => void; onReset: () => void;
 }) {
   const [name, setName] = useState(userName);
@@ -895,7 +899,9 @@ function SettingsScreen({ userName, userEmoji, consent, onBack, onSave, onReset 
         <p className="text-xs font-black text-[#9B8070] uppercase tracking-widest mb-3">Din data och vårdnadshavare</p>
         <ul className="flex flex-col gap-2 text-sm text-[#5A4235] leading-relaxed list-disc pl-5">
           <li>Allt du lägger in sparas bara i den här telefonen. Det finns inget konto.</li>
-          <li>Dina skärmbilder lämnar aldrig telefonen och sparas inte.</li>
+          {realReading
+            ? <li>När du väljer en skärmbild skickas den krypterat till en AI-tjänst som läser av siffrorna. Min Ekonom sparar inte bilden.</li>
+            : <li>Dina skärmbilder lämnar aldrig telefonen och sparas inte.</li>}
           <li>Du kan radera allt själv, när du vill, längst ner på den här sidan.</li>
           <li>Det här är en testversion. Frågor? Kontakta den som bjöd in dig till testet.</li>
         </ul>
@@ -934,8 +940,8 @@ const FAKE_SHOPS: { name: string; emoji: string; category: string; min: number; 
 ];
 const rnd = (a: number, b: number) => Math.floor(a + Math.random() * (b - a + 1));
 
-function UpdateBalance({ mode, onBack, onBalance, onPurchases }: {
-  mode: 'balance' | 'purchases'; onBack: () => void;
+function UpdateBalance({ mode, testCode, existing, onBack, onBalance, onPurchases }: {
+  mode: 'balance' | 'purchases'; testCode: string | null; existing: Purchase[]; onBack: () => void;
   onBalance: (n: number) => void; onPurchases: (list: Purchase[]) => void;
 }) {
   const isBal = mode === 'balance';
@@ -945,6 +951,7 @@ function UpdateBalance({ mode, onBack, onBalance, onPurchases }: {
   const [manAmt, setManAmt] = useState('');
   const [pName, setPName] = useState('');
   const [pCat, setPCat] = useState(CATEGORIES[0].name);
+  const [errMsg, setErrMsg] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const timer = useRef<number | undefined>(undefined);
   useEffect(() => () => window.clearTimeout(timer.current), []);
@@ -967,10 +974,56 @@ function UpdateBalance({ mode, onBack, onBalance, onPurchases }: {
     }, 2200);
   };
 
+  // Riktig avläsning (när testkod finns): bilden förminskas och görs om till JPEG i telefonen
+  // (det tar också bort metadata) och skickas till vår serverfunktion. Den sparas inte.
+  const readReal = async (file: File) => {
+    setStep('loading'); setErrMsg(null);
+    const fail = (msg?: string) => { setErrMsg(msg ?? null); setStep('error'); };
+    try {
+      const bmp = await createImageBitmap(file);
+      const sc = Math.min(1, 1600 / Math.max(bmp.width, bmp.height));
+      const c = document.createElement('canvas');
+      c.width = Math.round(bmp.width * sc); c.height = Math.round(bmp.height * sc);
+      c.getContext('2d')!.drawImage(bmp, 0, 0, c.width, c.height);
+      const image = c.toDataURL('image/jpeg', 0.85).split(',')[1];
+
+      const ctl = new AbortController();
+      const to = window.setTimeout(() => ctl.abort(), 45000);
+      const res = await fetch('/api/read-screenshot', {
+        method: 'POST', signal: ctl.signal, headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ code: testCode, mode, today: todayISO(), image }),
+      });
+      window.clearTimeout(to);
+      const j = await res.json();
+
+      if (j.error === 'bad_code') return fail('Testkoden fungerar inte. Be den som bjöd in dig om en ny länk.');
+      if (!j.ok) return fail();
+      if (isBal) {
+        if (typeof j.balance !== 'number') return fail();
+        setDetected(j.balance);
+      } else {
+        const t = todayISO();
+        const seen = new Set(existing.map(p => `${p.name}|${p.amount}|${p.iso}`));
+        const list: Purchase[] = (j.purchases as { name: string; amount: number; date: string | null; category: string }[])
+          .map((p, i) => {
+            const cat = CATEGORIES.find(c => c.name === p.category) ?? CATEGORIES[CATEGORIES.length - 1];
+            const iso = p.date && p.date <= t ? p.date : t;
+            return { id: Date.now() + i, name: p.name, amount: p.amount, iso, emoji: cat.emoji, regretted: false, category: cat.name };
+          })
+          .filter(p => !seen.has(`${p.name}|${p.amount}|${p.iso}`));
+        setFound(list);
+      }
+      setStep('detected');
+    } catch {
+      fail();
+    }
+  };
+
   const onFile = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files?.length) return;
+    const f = e.target.files?.[0];
+    if (!f) return;
     e.target.value = '';
-    simulate();
+    if (testCode) void readReal(f); else simulate();
   };
 
   const addManual = () => {
@@ -981,7 +1034,7 @@ function UpdateBalance({ mode, onBack, onBalance, onPurchases }: {
     }]);
   };
 
-  const Note = () => (
+  const Note = () => testCode ? null : (
     <p className="text-[11px] text-[#9B8070] text-center leading-snug">
       Testversion: appen läser inte bilden på riktigt än, så siffrorna är påhittade.
       Din bild lämnar aldrig telefonen. Ändra gärna till rätt värde.
@@ -1056,7 +1109,16 @@ function UpdateBalance({ mode, onBack, onBalance, onPurchases }: {
         <Note />
       </>}
 
-      {step === 'detected' && !isBal && <>
+      {step === 'detected' && !isBal && found.length === 0 && <>
+        <div className="flex flex-col items-center gap-3 py-6 text-center">
+          <Charlie size={90} mood="happy" />
+          <p className="text-xl font-black text-[#3D2C1E]">Inga nya köp</p>
+          <p className="text-sm text-[#6B5344] max-w-[250px]">Alla köp på bilden finns redan i appen.</p>
+        </div>
+        <Btn variant="primary" full onClick={onBack}>Tillbaka</Btn>
+      </>}
+
+      {step === 'detected' && !isBal && found.length > 0 && <>
         <CharlieComment mood="shopping" text="Jag hittade de här köpen. Stämmer det?" />
         <div className="flex flex-col gap-2.5">
           {found.map(p => (
@@ -1082,7 +1144,7 @@ function UpdateBalance({ mode, onBack, onBalance, onPurchases }: {
           <Charlie size={90} mood="worried" />
           <div className="text-center">
             <p className="text-2xl font-black text-[#3D2C1E]">Vi kunde inte läsa av bilden</p>
-            <p className="text-sm text-[#6B5344] mt-2 max-w-[270px] mx-auto">{isBal ? 'Se till att det syns tydligt vad som finns på kontot' : 'Se till att hela listan syns tydligt'} på skärmbilden och försök igen.</p>
+            <p className="text-sm text-[#6B5344] mt-2 max-w-[270px] mx-auto">{errMsg ?? `${isBal ? 'Se till att det syns tydligt vad som finns på kontot' : 'Se till att hela listan syns tydligt'} på skärmbilden och försök igen.`}</p>
           </div>
         </div>
         <Btn variant="primary" full onClick={() => setStep('start')}>Försök igen</Btn>
@@ -1200,7 +1262,7 @@ export default function App() {
   const resetAll = () => {
     clearState();
     const n = stack.length - 1;
-    setSt(freshState());
+    setSt({ ...freshState(), testCode: st.testCode });
     setActiveTab(0);
     setStack([{ id: 'root' }]);
     if (n > 0) window.history.go(-n);
@@ -1221,6 +1283,8 @@ export default function App() {
     if (id === 'update') return (
       <UpdateBalance
         mode={(params?.mode as 'balance' | 'purchases') ?? 'balance'}
+        testCode={st.testCode}
+        existing={st.purchases}
         onBack={() => pop()}
         onBalance={n => { setSt(s => ({ ...s, balance: n })); pop(); }}
         onPurchases={list => { setSt(s => ({ ...s, purchases: [...list, ...s.purchases] })); pop(); }}
@@ -1257,7 +1321,7 @@ export default function App() {
       return <BadgeCelebrate badge={b} onBack={() => pop()} />;
     }
     if (id === 'settings') return (
-      <SettingsScreen userName={st.userName} userEmoji={st.userEmoji} consent={st.consent} onBack={() => pop()}
+      <SettingsScreen userName={st.userName} userEmoji={st.userEmoji} consent={st.consent} realReading={!!st.testCode} onBack={() => pop()}
         onSave={(name, emoji) => setSt(s => ({ ...s, userName: name.trim() || s.userName, userEmoji: emoji }))}
         onReset={resetAll} />
     );
@@ -1266,7 +1330,7 @@ export default function App() {
 
   if (!st.onboarded) return (
     <Shell>
-      <Onboarding onComplete={(n, e, c) => setSt(s => ({ ...s, onboarded: true, consent: c, userName: n.trim(), userEmoji: e, openDays: [todayISO()] }))} />
+      <Onboarding realReading={!!st.testCode} onComplete={(n, e, c) => setSt(s => ({ ...s, onboarded: true, consent: c, userName: n.trim(), userEmoji: e, openDays: [todayISO()] }))} />
     </Shell>
   );
 
