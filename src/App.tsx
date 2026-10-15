@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { BackBtn, BottomNav, Btn, Card, Charlie, CharlieComment, Confetti, Rain, Shell } from './ui';
 import {
   BADGE_DEFS, CATEGORIES, EMOJI_META, EMOJI_OPTS, clearState, computeBadges, currentStreak, fmtDate,
-  freshState, loadState, saveState, todayISO, addDays, weekSpending,
+  freshState, loadState, saveState, DEBUG, todayISO, addDays, weekSpending,
 } from './lib';
 import type { AppState, Badge, Dream, Purchase } from './lib';
 
@@ -1149,7 +1149,7 @@ function UpdateBalance({ mode, testCode, existing, onBack, onBalance, onPurchase
             <p className="text-sm text-[#6B5344] mt-2 max-w-[270px] mx-auto">{errMsg ?? `${isBal ? 'Se till att det syns tydligt vad som finns på kontot' : 'Se till att hela listan syns tydligt'} på skärmbilden och försök igen.`}</p>
           </div>
         </div>
-        {testCode && errWhy && <p className="text-[11px] text-[#9B8070] text-center break-words">Teknisk orsak (testversion): {errWhy}</p>}
+        {DEBUG && errWhy && <p className="text-[11px] text-[#9B8070] text-center break-words">Teknisk orsak (testversion): {errWhy}</p>}
         <Btn variant="primary" full onClick={() => setStep('start')}>Försök igen</Btn>
         <Btn variant="secondary" full onClick={() => setStep('manual')}>Skriv in själv</Btn>
       </>}

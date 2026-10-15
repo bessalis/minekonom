@@ -163,6 +163,9 @@ function demoState(): AppState {
 
 const KEY = 'min-ekonom-light:v1';
 
+/** Teknisk felorsak visas bara om sidan öppnades med ?debug=1 (läses innan loadState rensar adressen). */
+export const DEBUG = (() => { try { return new URLSearchParams(window.location.search).has('debug'); } catch { return false; } })();
+
 export function loadState(): AppState {
   let params: URLSearchParams | null = null;
   try { params = new URLSearchParams(window.location.search); } catch { /* ignore */ }
