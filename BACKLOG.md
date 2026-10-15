@@ -3,7 +3,7 @@
 Ordning: överst = närmast. Flytta rader till "Klart" när de är gjorda.
 
 ## Näst på tur
-- [ ] **Slå på riktig skärmdumpsavläsning**: koden är klar. Kvar: sätt `ANTHROPIC_API_KEY` och `TEST_CODES` i Netlify, skriftligt samtycke från vårdnadshavare utanför appen, kontrollera leverantörens lagringsvillkor och att samtyckestexten i appen stämmer med dem.
+- [ ] **Riktig avläsning – inför test med barn**: nyckel och testkoder är på plats och avläsningen fungerar. Kvar: skriftligt samtycke från vårdnadshavare utanför appen, kontrollera leverantörens lagringsvillkor mot samtyckestexten, testa fler banker/skärmdumpar, dölja den tekniska felraden för barn, sätt månadsgräns i Console.
 - [ ] **Testa formuleringar** av "saldo / vad finns på kontot / summan på kontot". Välj den som fastnar bäst hos målgruppen och gör texterna enhetliga.
 
 ## Idéer – avvaktar
@@ -19,6 +19,7 @@ Ordning: överst = närmast. Flytta rader till "Klart" när de är gjorda.
 - [ ] **Skydd mot felinmatning** (om manuell inmatning blir huvudväg): läs upp siffran i ord och som likhet, varna vid stora förändringar mot förra värdet.
 
 ## Klart
+- [x] Riktig avläsning verifierad på riktig skärmdump (2026-10-15)
 - [x] Skärmdumpsavläsning (kod): serverfunktion `netlify/functions/read-screenshot.mjs`, testkod via länk `?kod=…`, faller tillbaka på fejkat läge utan kod
 - [x] PWA av Figma-prototypen, offline, installerbar
 - [x] Samtyckessteg i onboarding + vårdnadshavartext i inställningar
